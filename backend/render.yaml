@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: vday-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ENTRY_PASSWORD
+        sync: false
+      - key: RELATIONSHIP_START_DATE
+        sync: false
+      - key: HER_NAME
+        sync: false
+      - key: MY_NAME
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
