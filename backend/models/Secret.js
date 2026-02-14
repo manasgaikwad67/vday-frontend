@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const secretSchema = new mongoose.Schema(
   {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, unique: true },
     questions: [
       {
         question: { type: String, required: true },

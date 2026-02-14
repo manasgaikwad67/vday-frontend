@@ -1,18 +1,20 @@
 const Chat = require("../models/Chat");
 const { boyfriendChat } = require("../services/groqService");
+const { getUserConfig } = require("../services/userService");
 
 exports.sendMessage = async (req, res) => {
   try {
     const { message, sessionId = "default" } = req.body;
+    const userId = req.userId;
 
     if (!message || !message.trim()) {
       return res.status(400).json({ success: false, message: "Message is required" });
     }
 
-    // Get or create conversation
-    let chat = await Chat.findOne({ sessionId });
+    // Get or create conversation for this user
+    let chat = await Chat.findOne({ userId, sessionId });
     if (!chat) {
-      chat = new Chat({ sessionId, messages: [] });
+      chat = new Chat({ userId, sessionId, messages: [] });
     }
 
     // Build conversation history for context
@@ -21,8 +23,11 @@ exports.sendMessage = async (req, res) => {
       content: m.content,
     }));
 
-    // Get AI response
-    const reply = await boyfriendChat(history, message.trim());
+    // Get user config for personalization
+    const config = await getUserConfig(userId);
+
+    // Get AI response with personalized config
+    const reply = await boyfriendChat(history, message.trim(), config);
 
     // Save both messages
     chat.messages.push(
@@ -41,7 +46,8 @@ exports.sendMessage = async (req, res) => {
 exports.getHistory = async (req, res) => {
   try {
     const { sessionId = "default" } = req.params;
-    const chat = await Chat.findOne({ sessionId });
+    const userId = req.userId;
+    const chat = await Chat.findOne({ userId, sessionId });
     res.json({ success: true, messages: chat?.messages || [] });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -51,7 +57,8 @@ exports.getHistory = async (req, res) => {
 exports.clearHistory = async (req, res) => {
   try {
     const { sessionId = "default" } = req.params;
-    await Chat.findOneAndDelete({ sessionId });
+    const userId = req.userId;
+    await Chat.findOneAndDelete({ userId, sessionId });
     res.json({ success: true, message: "Chat cleared" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

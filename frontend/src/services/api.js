@@ -8,20 +8,30 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Attach entry token to every request
+// Attach tokens to every request
 api.interceptors.request.use((config) => {
   const entryToken = localStorage.getItem("entryToken");
   if (entryToken) {
     config.headers["x-entry-token"] = entryToken;
   }
-  const adminToken = localStorage.getItem("adminToken");
-  if (adminToken) {
-    config.headers["Authorization"] = `Bearer ${adminToken}`;
+  // For creators (admins)
+  const creatorToken = localStorage.getItem("creatorToken");
+  if (creatorToken) {
+    config.headers["Authorization"] = `Bearer ${creatorToken}`;
   }
   return config;
 });
 
-// ── Auth ─────────────────────────────────────────────────
+// ── User/Creator Auth ────────────────────────────────────
+export const registerCreator = (data) => api.post("/user/register", data);
+export const loginCreator = (email, password) => api.post("/user/login", { email, password });
+export const partnerEntry = (slug, password) => api.post("/user/partner-entry", { slug, password });
+export const checkSlug = (slug) => api.get(`/user/check-slug/${slug}`);
+export const getPageBySlug = (slug) => api.get(`/user/page/${slug}`);
+export const getCreatorProfile = () => api.get("/user/profile");
+export const updateCreatorProfile = (data) => api.put("/user/profile", data);
+
+// ── Legacy Auth (for backward compatibility) ─────────────
 export const verifyEntry = (password) => api.post("/auth/entry", { password });
 export const adminLogin = (username, password) =>
   api.post("/auth/admin-login", { username, password });

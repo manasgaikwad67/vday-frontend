@@ -29,13 +29,14 @@ exports.upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 10
 exports.create = async (req, res) => {
   try {
     const { title, caption, date } = req.body;
+    const userId = req.userId;
 
     if (!req.file) {
       return res.status(400).json({ success: false, message: "Image is required" });
     }
 
     const imageUrl = `/uploads/memories/${req.file.filename}`;
-    const memory = await Memory.create({ title, caption, date, imageUrl });
+    const memory = await Memory.create({ userId, title, caption, date, imageUrl });
 
     res.status(201).json({ success: true, memory });
   } catch (error) {
@@ -43,9 +44,10 @@ exports.create = async (req, res) => {
   }
 };
 
-exports.getAll = async (_req, res) => {
+exports.getAll = async (req, res) => {
   try {
-    const memories = await Memory.find().sort({ date: 1 });
+    const userId = req.userId;
+    const memories = await Memory.find({ userId }).sort({ date: 1 });
     res.json({ success: true, memories });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -55,13 +57,18 @@ exports.getAll = async (_req, res) => {
 exports.update = async (req, res) => {
   try {
     const { title, caption, date } = req.body;
+    const userId = req.userId;
     const updateData = { title, caption, date };
 
     if (req.file) {
       updateData.imageUrl = `/uploads/memories/${req.file.filename}`;
     }
 
-    const memory = await Memory.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    const memory = await Memory.findOneAndUpdate(
+      { _id: req.params.id, userId },
+      updateData,
+      { new: true }
+    );
     if (!memory) {
       return res.status(404).json({ success: false, message: "Memory not found" });
     }
@@ -74,7 +81,8 @@ exports.update = async (req, res) => {
 
 exports.remove = async (req, res) => {
   try {
-    const memory = await Memory.findByIdAndDelete(req.params.id);
+    const userId = req.userId;
+    const memory = await Memory.findOneAndDelete({ _id: req.params.id, userId });
     if (!memory) {
       return res.status(404).json({ success: false, message: "Memory not found" });
     }

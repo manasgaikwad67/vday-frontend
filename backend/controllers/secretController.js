@@ -1,21 +1,13 @@
 const Secret = require("../models/Secret");
 
-exports.getQuestions = async (_req, res) => {
+exports.getQuestions = async (req, res) => {
   try {
-    let secret = await Secret.findOne({ isActive: true });
+    const userId = req.userId;
+    let secret = await Secret.findOne({ userId, isActive: true });
 
     if (!secret) {
-      // Seed default questions
-      secret = await Secret.create({
-        questions: [
-          { question: "What was the first thing I said to you?", answer: "" },
-          { question: "What's our song?", answer: "" },
-          { question: "Where did we have our first date?", answer: "" },
-        ],
-        secretMessage:
-          "You remembered everything. Every little moment. That's how I know this is real. You don't just love me — you pay attention to me. And in a world full of distractions, that's the most romantic thing anyone could do. I love you more than words on any screen could ever capture. 💕",
-        isActive: true,
-      });
+      // Return empty if no secret game configured for this user
+      return res.json({ success: true, questions: [], message: "Secret game not configured yet" });
     }
 
     // Only send questions, not answers
@@ -33,12 +25,13 @@ exports.getQuestions = async (_req, res) => {
 exports.verifyAnswers = async (req, res) => {
   try {
     const { answers } = req.body; // [{ questionId, answer }]
+    const userId = req.userId;
 
     if (!answers || !Array.isArray(answers)) {
       return res.status(400).json({ success: false, message: "Answers are required" });
     }
 
-    const secret = await Secret.findOne({ isActive: true });
+    const secret = await Secret.findOne({ userId, isActive: true });
     if (!secret) {
       return res.status(404).json({ success: false, message: "No secret game found" });
     }
@@ -73,13 +66,24 @@ exports.verifyAnswers = async (req, res) => {
 exports.updateSecret = async (req, res) => {
   try {
     const { questions, secretMessage, videoUrl } = req.body;
+    const userId = req.userId;
 
     const secret = await Secret.findOneAndUpdate(
-      { isActive: true },
-      { questions, secretMessage, videoUrl },
+      { userId },
+      { userId, questions, secretMessage, videoUrl, isActive: true },
       { new: true, upsert: true }
     );
 
+    res.json({ success: true, secret });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getSecret = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const secret = await Secret.findOne({ userId });
     res.json({ success: true, secret });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

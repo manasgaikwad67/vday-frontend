@@ -39,6 +39,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ── Routes ──────────────────────────────────────────────────────
 app.use("/api/auth",     require("./routes/auth"));
+app.use("/api/user",     require("./routes/user"));
 app.use("/api/chat",     require("./routes/chat"));
 app.use("/api/letter",   require("./routes/letter"));
 app.use("/api/memory",   require("./routes/memory"));

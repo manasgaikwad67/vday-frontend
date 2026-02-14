@@ -1,10 +1,10 @@
 const router = require("express").Router();
-const { verifyAdmin } = require("../middleware/auth");
+const { verifyCreator } = require("../middleware/auth");
 const { getDashboard, getChatLogs, getLetters, getSecret } = require("../controllers/adminController");
 
-router.get("/dashboard", verifyAdmin, getDashboard);
-router.get("/chats", verifyAdmin, getChatLogs);
-router.get("/letters", verifyAdmin, getLetters);
-router.get("/secret", verifyAdmin, getSecret);
+router.get("/dashboard", verifyCreator, getDashboard);
+router.get("/chats", verifyCreator, getChatLogs);
+router.get("/letters", verifyCreator, getLetters);
+router.get("/secret", verifyCreator, getSecret);
 
 module.exports = router;

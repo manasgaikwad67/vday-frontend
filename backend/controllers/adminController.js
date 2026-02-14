@@ -5,14 +5,15 @@ const Visitor = require("../models/Visitor");
 const DailyMessage = require("../models/DailyMessage");
 const Secret = require("../models/Secret");
 
-exports.getDashboard = async (_req, res) => {
+exports.getDashboard = async (req, res) => {
   try {
+    const userId = req.userId;
     const [chatCount, letterCount, memoryCount, visitor, dailyCount] = await Promise.all([
-      Chat.countDocuments(),
-      Letter.countDocuments(),
-      Memory.countDocuments(),
-      Visitor.findOne(),
-      DailyMessage.countDocuments(),
+      Chat.countDocuments({ userId }),
+      Letter.countDocuments({ userId }),
+      Memory.countDocuments({ userId }),
+      Visitor.findOne({ userId }),
+      DailyMessage.countDocuments({ userId }),
     ]);
 
     res.json({
@@ -31,27 +32,30 @@ exports.getDashboard = async (_req, res) => {
   }
 };
 
-exports.getChatLogs = async (_req, res) => {
+exports.getChatLogs = async (req, res) => {
   try {
-    const chats = await Chat.find().sort({ updatedAt: -1 });
+    const userId = req.userId;
+    const chats = await Chat.find({ userId }).sort({ updatedAt: -1 });
     res.json({ success: true, chats });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-exports.getLetters = async (_req, res) => {
+exports.getLetters = async (req, res) => {
   try {
-    const letters = await Letter.find().sort({ createdAt: -1 });
+    const userId = req.userId;
+    const letters = await Letter.find({ userId }).sort({ createdAt: -1 });
     res.json({ success: true, letters });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-exports.getSecret = async (_req, res) => {
+exports.getSecret = async (req, res) => {
   try {
-    const secret = await Secret.findOne({ isActive: true });
+    const userId = req.userId;
+    const secret = await Secret.findOne({ userId });
     res.json({ success: true, secret });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
