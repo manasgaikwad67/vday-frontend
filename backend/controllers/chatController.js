@@ -1,20 +1,18 @@
 const Chat = require("../models/Chat");
 const { boyfriendChat } = require("../services/groqService");
-const { getUserConfig } = require("../services/userService");
 
 exports.sendMessage = async (req, res) => {
   try {
     const { message, sessionId = "default" } = req.body;
-    const userId = req.userId;
 
     if (!message || !message.trim()) {
       return res.status(400).json({ success: false, message: "Message is required" });
     }
 
-    // Get or create conversation for this user
-    let chat = await Chat.findOne({ userId, sessionId });
+    // Get or create conversation
+    let chat = await Chat.findOne({ sessionId });
     if (!chat) {
-      chat = new Chat({ userId, sessionId, messages: [] });
+      chat = new Chat({ sessionId, messages: [] });
     }
 
     // Build conversation history for context
@@ -23,20 +21,27 @@ exports.sendMessage = async (req, res) => {
       content: m.content,
     }));
 
-    // Get user config for personalization
-    const config = await getUserConfig(userId);
+    // Get AI response
+    const rawReply = await boyfriendChat(history, message.trim());
 
-    // Get AI response with personalized config
-    const reply = await boyfriendChat(history, message.trim(), config);
+    // Split into multiple message bubbles (Manas sends bursts of short texts)
+    // Handle all variations: literal "\n---\n", actual newlines, "---", etc.
+    const bubbles = rawReply
+      .replace(/\\n/g, "\n")           // convert literal \n to real newlines
+      .split(/\n?\s*---\s*\n?/)        // split on --- with optional whitespace/newlines
+      .map((b) => b.trim())
+      .filter((b) => b.length > 0);
 
-    // Save both messages
-    chat.messages.push(
-      { role: "user", content: message.trim() },
-      { role: "assistant", content: reply }
-    );
+    // Save user message
+    chat.messages.push({ role: "user", content: message.trim() });
+
+    // Save each bubble as a separate assistant message
+    for (const bubble of bubbles) {
+      chat.messages.push({ role: "assistant", content: bubble });
+    }
     await chat.save();
 
-    res.json({ success: true, reply });
+    res.json({ success: true, reply: rawReply, bubbles });
   } catch (error) {
     console.error("Chat error:", error.message);
     res.status(500).json({ success: false, message: error.message });
@@ -46,8 +51,7 @@ exports.sendMessage = async (req, res) => {
 exports.getHistory = async (req, res) => {
   try {
     const { sessionId = "default" } = req.params;
-    const userId = req.userId;
-    const chat = await Chat.findOne({ userId, sessionId });
+    const chat = await Chat.findOne({ sessionId });
     res.json({ success: true, messages: chat?.messages || [] });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -57,8 +61,7 @@ exports.getHistory = async (req, res) => {
 exports.clearHistory = async (req, res) => {
   try {
     const { sessionId = "default" } = req.params;
-    const userId = req.userId;
-    await Chat.findOneAndDelete({ userId, sessionId });
+    await Chat.findOneAndDelete({ sessionId });
     res.json({ success: true, message: "Chat cleared" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

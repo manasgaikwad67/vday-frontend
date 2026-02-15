@@ -1,8 +1,8 @@
 const router = require("express").Router();
 const { getToday, getAll } = require("../controllers/dailyController");
-const { verifyAccess } = require("../middleware/auth");
+const { verifyEntry } = require("../middleware/auth");
 
-router.get("/today", verifyAccess, getToday);
-router.get("/", verifyAccess, getAll);
+router.get("/today", verifyEntry, getToday);
+router.get("/", verifyEntry, getAll);
 
 module.exports = router;

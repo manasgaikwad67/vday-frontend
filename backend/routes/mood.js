@@ -1,8 +1,8 @@
 const router = require("express").Router();
 const { analyze } = require("../controllers/moodController");
-const { verifyAccess } = require("../middleware/auth");
+const { verifyEntry } = require("../middleware/auth");
 const { aiLimiter } = require("../middleware/rateLimit");
 
-router.post("/", verifyAccess, aiLimiter, analyze);
+router.post("/", verifyEntry, aiLimiter, analyze);
 
 module.exports = router;

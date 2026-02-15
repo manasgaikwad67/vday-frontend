@@ -1,10 +1,8 @@
 const { moodResponse } = require("../services/groqService");
-const { getUserConfig } = require("../services/userService");
 
 exports.analyze = async (req, res) => {
   try {
     const { mood, details } = req.body;
-    const userId = req.userId;
 
     const validMoods = ["sad", "stressed", "happy", "angry", "anxious", "lonely", "loved"];
     if (!mood || !validMoods.includes(mood)) {
@@ -15,9 +13,7 @@ exports.analyze = async (req, res) => {
       });
     }
 
-    // Get user config for personalization
-    const config = await getUserConfig(userId);
-    const response = await moodResponse(mood, details, config);
+    const response = await moodResponse(mood, details);
     res.json({ success: true, mood, response });
   } catch (error) {
     console.error("Mood error:", error.message);

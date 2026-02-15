@@ -1,34 +1,23 @@
 const User = require("../models/User");
 
 /**
- * Get user config for AI services
+ * Get user config for AI personalization
  */
 async function getUserConfig(userId) {
-  if (!userId) {
-    return {
-      creatorName: process.env.MY_NAME || "Your Love",
-      partnerName: process.env.HER_NAME || "My Love",
-    };
-  }
-
   try {
-    const user = await User.findById(userId).select("creatorName partnerName relationshipStartDate");
-    if (!user) {
-      return {
-        creatorName: process.env.MY_NAME || "Your Love",
-        partnerName: process.env.HER_NAME || "My Love",
-      };
-    }
+    if (!userId) return {};
+
+    const user = await User.findById(userId).select("creatorName partnerName relationshipStartDate").lean();
+    if (!user) return {};
+
     return {
-      creatorName: user.creatorName,
-      partnerName: user.partnerName,
-      relationshipStartDate: user.relationshipStartDate,
+      creatorName: user.creatorName || undefined,
+      partnerName: user.partnerName || undefined,
+      relationshipStartDate: user.relationshipStartDate || undefined,
     };
-  } catch {
-    return {
-      creatorName: process.env.MY_NAME || "Your Love",
-      partnerName: process.env.HER_NAME || "My Love",
-    };
+  } catch (error) {
+    console.error("getUserConfig error:", error.message);
+    return {};
   }
 }
 

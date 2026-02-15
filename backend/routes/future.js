@@ -1,8 +1,8 @@
 const router = require("express").Router();
 const { predict } = require("../controllers/futureController");
-const { verifyAccess } = require("../middleware/auth");
+const { verifyEntry } = require("../middleware/auth");
 const { aiLimiter } = require("../middleware/rateLimit");
 
-router.post("/", verifyAccess, aiLimiter, predict);
+router.post("/", verifyEntry, aiLimiter, predict);
 
 module.exports = router;

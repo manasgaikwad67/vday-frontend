@@ -34,11 +34,28 @@ export default function Chatbot() {
 
     try {
       const { data } = await sendChatMessage(userMsg);
-      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+
+      // Support burst messages (multiple bubbles) like Manas's texting style
+      const bubbles = data.bubbles && data.bubbles.length > 0
+        ? data.bubbles
+        : data.reply
+            .replace(/\\n/g, "\n")
+            .split(/\n?\s*---\s*\n?/)
+            .map((b) => b.trim())
+            .filter(Boolean);
+
+      // Show each bubble with a staggered delay for realistic feel
+      for (let i = 0; i < bubbles.length; i++) {
+        if (i > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 600 + Math.random() * 400));
+        }
+        setMessages((prev) => [...prev, { role: "assistant", content: bubbles[i] }]);
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "My thoughts got tangled... try again? 💕" },
+        { role: "assistant", content: "Arey network issue ala 😩" },
+        { role: "assistant", content: "Try again kar na baal ♥️" },
       ]);
     } finally {
       setLoading(false);
