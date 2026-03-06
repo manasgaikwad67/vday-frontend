@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "./context/AuthContext";
 import { MusicProvider } from "./context/MusicContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -54,6 +55,7 @@ export default function App() {
               <Route path="/forever" element={<ProtectedPage><Forever /></ProtectedPage>} />
             </Routes>
           </AnimatePresence>
+          <Analytics />
         </MusicProvider>
       </AuthProvider>
     </BrowserRouter>
